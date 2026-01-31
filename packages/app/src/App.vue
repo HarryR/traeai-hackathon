@@ -4,8 +4,7 @@ import { Contract, JsonRpcProvider, formatEther, formatUnits, parseEther, parseU
 import QRCode from 'qrcode';
 import { useWallet } from './composables/useWallet';
 import { useBalances } from './composables/useBalances';
-import { FEATURES, SUPPORTED_NETWORKS, SUPPORTED_TOKENS, OWNER_PUBKEY, ERC20_ABI, deriveFeatureAddress } from './utils/constants';
-import { encryptMessage } from './utils/encryption';
+import { FEATURES, SUPPORTED_NETWORKS, SUPPORTED_TOKENS, ERC20_ABI, deriveFeatureAddress } from './utils/constants';
 import WalletConnect from './components/WalletConnect.vue';
 
 const { address, connected, chainId, signer } = useWallet();
@@ -13,7 +12,6 @@ const { balances, fetchBalances, loading: loadingBalances } = useBalances(addres
 
 // Contribution Form State
 const selectedFeatureId = ref(FEATURES[0].id);
-const email = ref('');
 const contributionAmount = ref('');
 const selectedCurrency = ref<string>(''); // Symbol of selected currency
 const txStatus = ref<{ type: 'info' | 'success' | 'error', message: string } | null>(null);
@@ -96,23 +94,9 @@ const handleContribute = async () => {
     const currency = availableCurrencies.value.find(c => c.symbol === selectedCurrency.value);
     if (!currency) throw new Error('Invalid currency selected');
     
-    let encryptedEmail = '';
-    if (email.value) {
-      try {
-        txStatus.value = { type: 'info', message: 'Encrypting data...' };
-        encryptedEmail = await encryptMessage(OWNER_PUBKEY, email.value);
-      } catch (e) {
-        console.error('Encryption error:', e);
-        // Fallback or error handling if encryption fails
-        throw new Error('Failed to encrypt email');
-      }
-    }
-
     console.log('Contributing:', {
       featureId: feature.id,
       fundingAddress,
-      email: email.value, // Keep plain for debug/log
-      encryptedEmail,     // Add encrypted version
       amount: contributionAmount.value,
       currency: currency,
       network: chainId.value
@@ -144,7 +128,6 @@ const handleContribute = async () => {
     };
     
     // Clear form after success
-    email.value = '';
     contributionAmount.value = '';
     
     // Refetch balances
@@ -186,7 +169,7 @@ const fetchFeatureTotals = async () => {
 
   try {
     const totalsByFeature: Record<string, { address: string; totalUsd: number | null }> = {};
-    const networks = Object.values(SUPPORTED_NETWORKS);
+    const networks = Object.values(SUPPORTED_NETWORKS).filter((network) => !network.isTestnet);
 
     await Promise.all(FEATURES.map(async (feature) => {
       const address = deriveFeatureAddress(feature.id);
@@ -338,20 +321,6 @@ const formatUsdAmount = (amount: number) => {
         <h2>Make your Contribution</h2>
         <div class="form-content">
           <div class="form-group">
-            <label>Your Email (Optional)</label>
-            <div class="input-wrapper">
-              <input 
-                v-model="email" 
-                type="email" 
-                placeholder="updates@example.com"
-                class="input-field modern-input"
-              />
-              <span class="input-icon">✉️</span>
-            </div>
-            <small>We'll notify you when this feature is shipped.</small>
-          </div>
-
-          <div class="form-group">
             <label>Contribution Amount</label>
             <div class="amount-input-group modern-group">
               <input 
@@ -480,22 +449,23 @@ header {
 }
 
 .intro-card {
-  background: #1e1e1e;
-  border: 1px solid #333;
-  border-radius: 16px;
-  padding: 1.75rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
 }
 
 .intro-card-accent {
-  border-color: rgba(100, 108, 255, 0.4);
-  background: linear-gradient(145deg, rgba(30, 30, 30, 0.95), rgba(32, 32, 42, 0.95));
+  border-color: transparent;
+  background: transparent;
 }
 
 .intro-card-media {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  grid-column: 1 / -1;
 }
 
 .intro-title {
@@ -607,9 +577,14 @@ h2, h3 {
 .radio-indicator {
   width: 20px;
   height: 20px;
+  min-width: 20px;
+  min-height: 20px;
+  aspect-ratio: 1 / 1;
   border-radius: 50%;
   border: 2px solid #666;
   position: relative;
+  box-sizing: border-box;
+  flex: 0 0 20px;
 }
 
 .feature-card.selected .radio-indicator {
@@ -619,12 +594,13 @@ h2, h3 {
 .feature-card.selected .radio-indicator::after {
   content: '';
   position: absolute;
-  top: 3px;
-  left: 3px;
   width: 10px;
   height: 10px;
   border-radius: 50%;
   background: #646cff;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 .feature-desc {

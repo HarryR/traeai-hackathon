@@ -53,7 +53,6 @@ export const SUPPORTED_NETWORKS: Record<number, Network> = {
   }
 };
 
-export const OWNER_PUBKEY: string = '04941caf7c02e18bae7d9593670a5ca4a19d6b27c689dd432bd39169a43f9c16b7e2ed686dc7e4f9a80e8034814809f3eccb492d43e40137ef320b60755081c2fd';
 export const FEATURE_ROOT_PUBKEY: string = '04aa6211a9034ee81b0e338ec728d2ab2eb624a4299d17b763d9566b9a6845876daaf08883451420ad82adbf2b87cbce583aee8fde0cb07e0e0ea6f85f5f816e5e';
 
 const SECP256K1_ORDER = BigInt('0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141');
