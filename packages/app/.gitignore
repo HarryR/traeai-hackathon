@@ -1,0 +1,4 @@
+*.tsbuildinfo
+dist/
+*.d.ts
+*.js
