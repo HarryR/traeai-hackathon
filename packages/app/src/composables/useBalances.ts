@@ -19,7 +19,8 @@ export function useBalances(address: string | null) {
         newBalances[network.chainId] = networkBalances;
 
         try {
-          const provider = new JsonRpcProvider(network.rpcUrl);
+          const rpcUrl = network.rpcUrl.trim();
+          const provider = new JsonRpcProvider(rpcUrl);
           const tokens = SUPPORTED_TOKENS[network.chainId] || [];
           
           for (const token of tokens) {

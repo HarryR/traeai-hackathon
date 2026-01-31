@@ -1,9 +1,13 @@
+import { secp256k1 } from '@noble/curves/secp256k1';
+import { getAddress, keccak256, toUtf8Bytes } from 'ethers';
+
 export interface Network {
   chainId: number;
   name: string;
   rpcUrl: string;
   currency: string;
   explorerUrl: string;
+  isTestnet: boolean;
 }
 
 export interface Token {
@@ -12,6 +16,7 @@ export interface Token {
   decimals: number;
   name: string;
   isNative?: boolean;
+  isStableUsd?: boolean;
 }
 
 export interface Feature {
@@ -22,18 +27,69 @@ export interface Feature {
 }
 
 export const SUPPORTED_NETWORKS: Record<number, Network> = {
+  1: {
+    chainId: 1,
+    name: 'Ethereum',
+    rpcUrl: 'https://1rpc.io/eth',
+    currency: 'ETH',
+    explorerUrl: 'https://etherscan.io',
+    isTestnet: false
+  },
   11155111: {
     chainId: 11155111,
-    name: 'Sepolia',
+    name: 'Ethereum Sepolia',
     rpcUrl: 'https://1rpc.io/sepolia',
     currency: 'ETH',
-    explorerUrl: 'https://sepolia.etherscan.io'
+    explorerUrl: 'https://sepolia.etherscan.io',
+    isTestnet: true
+  },
+  137: {
+    chainId: 137,
+    name: 'Polygon',
+    rpcUrl: 'https://1rpc.io/matic',
+    currency: 'ETH',
+    explorerUrl: 'https://polygonscan.com/',
+    isTestnet: false
   }
 };
 
 export const OWNER_PUBKEY: string = '04941caf7c02e18bae7d9593670a5ca4a19d6b27c689dd432bd39169a43f9c16b7e2ed686dc7e4f9a80e8034814809f3eccb492d43e40137ef320b60755081c2fd';
+export const FEATURE_ROOT_PUBKEY: string = '04aa6211a9034ee81b0e338ec728d2ab2eb624a4299d17b763d9566b9a6845876daaf08883451420ad82adbf2b87cbce583aee8fde0cb07e0e0ea6f85f5f816e5e';
+
+const SECP256K1_ORDER = BigInt('0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141');
+
+function hashFeatureIdToScalar(featureId: string): bigint {
+  const digest = keccak256(toUtf8Bytes(featureId));
+  const scalar = BigInt(digest) % SECP256K1_ORDER;
+  return scalar === 0n ? 1n : scalar;
+}
+
+export function deriveFeatureAddress(featureId: string): string {
+  const scalar = hashFeatureIdToScalar(featureId);
+  const rootPoint = secp256k1.ProjectivePoint.fromHex(FEATURE_ROOT_PUBKEY);
+  const derivedPoint = rootPoint.multiply(scalar);
+  const uncompressed = derivedPoint.toRawBytes(false);
+  const hash = keccak256(uncompressed.slice(1));
+  return getAddress(`0x${hash.slice(-40)}`);
+}
 
 export const SUPPORTED_TOKENS: Record<number, Token[]> = {
+  1: [
+    {
+      address: 'NATIVE',
+      symbol: 'ETH',
+      decimals: 18,
+      name: 'Ethereum',
+      isNative: true
+    },
+    {
+      address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+      symbol: 'USDC',
+      decimals: 6,
+      name: 'USD Coin',
+      isStableUsd: true
+    }
+  ],
   11155111: [
     {
       address: 'NATIVE',
@@ -43,10 +99,27 @@ export const SUPPORTED_TOKENS: Record<number, Token[]> = {
       isNative: true
     },
     {
-      address: '0x1c7d4b196cb0c7b01d743fbc6116a902379c7238', // Mock USDC on Sepolia
+      address: '0x1c7d4b196cb0c7b01d743fbc6116a902379c7238',
       symbol: 'USDC',
       decimals: 6,
-      name: 'USD Coin'
+      name: 'USD Coin',
+      isStableUsd: true
+    }
+  ],
+  137: [
+    {
+      address: 'NATIVE',
+      symbol: 'POL',
+      decimals: 18,
+      name: 'Polygon',
+      isNative: true
+    },
+    {
+      address: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359',
+      symbol: 'USDC',
+      decimals: 6,
+      name: 'USD Coin',
+      isStableUsd: true
     }
   ]
 };

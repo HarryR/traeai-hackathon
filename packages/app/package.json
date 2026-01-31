@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@noble/curves": "^1.8.1",
     "ethers": "^6.13.0",
     "qrcode": "^1.5.4",
     "vue": "^3.4.21"

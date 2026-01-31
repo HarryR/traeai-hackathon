@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
-import { Contract, parseEther, parseUnits } from 'ethers';
+import { Contract, JsonRpcProvider, formatEther, formatUnits, parseEther, parseUnits } from 'ethers';
 import QRCode from 'qrcode';
 import { useWallet } from './composables/useWallet';
 import { useBalances } from './composables/useBalances';
-import { FEATURES, SUPPORTED_NETWORKS, SUPPORTED_TOKENS, OWNER_PUBKEY, ERC20_ABI } from './utils/constants';
+import { FEATURES, SUPPORTED_NETWORKS, SUPPORTED_TOKENS, OWNER_PUBKEY, ERC20_ABI, deriveFeatureAddress } from './utils/constants';
 import { encryptMessage } from './utils/encryption';
 import WalletConnect from './components/WalletConnect.vue';
 
@@ -19,6 +19,10 @@ const selectedCurrency = ref<string>(''); // Symbol of selected currency
 const txStatus = ref<{ type: 'info' | 'success' | 'error', message: string } | null>(null);
 const pageUrl = ref('');
 const qrDataUrl = ref('');
+const ethUsdPrice = ref<number | null>(null);
+const loadingFeatureTotals = ref(false);
+const featureTotalsError = ref<string | null>(null);
+const featureTotals = ref<Record<string, { address: string; totalUsd: number | null }>>({});
 
 // Available currencies for the current chain
 const availableCurrencies = computed(() => {
@@ -55,11 +59,18 @@ const generateQr = async (url: string) => {
 onMounted(() => {
   pageUrl.value = window.location.href;
   if (pageUrl.value) generateQr(pageUrl.value);
+  fetchFeatureTotals();
 });
 
 watch(pageUrl, (url) => {
   if (url) generateQr(url);
 });
+
+const handleSelectFeature = (featureId: string) => {
+  selectedFeatureId.value = featureId;
+  const derivedAddress = deriveFeatureAddress(featureId);
+  console.log('Feature selection:', { featureId, derivedAddress });
+};
 
 const handleContribute = async () => {
   if (!connected.value || !signer.value) {
@@ -81,6 +92,7 @@ const handleContribute = async () => {
   txStatus.value = { type: 'info', message: 'Initiating transaction...' };
   
   try {
+    const fundingAddress = deriveFeatureAddress(feature.id);
     const currency = availableCurrencies.value.find(c => c.symbol === selectedCurrency.value);
     if (!currency) throw new Error('Invalid currency selected');
     
@@ -98,7 +110,7 @@ const handleContribute = async () => {
 
     console.log('Contributing:', {
       featureId: feature.id,
-      fundingAddress: feature.fundingAddress,
+      fundingAddress,
       email: email.value, // Keep plain for debug/log
       encryptedEmail,     // Add encrypted version
       amount: contributionAmount.value,
@@ -111,13 +123,13 @@ const handleContribute = async () => {
     let tx;
     if (currency.isNative) {
       tx = await signer.value.sendTransaction({
-        to: feature.fundingAddress,
+        to: fundingAddress,
         value: parseEther(contributionAmount.value.toString())
       });
     } else {
       const contract = new Contract(currency.address, ERC20_ABI, signer.value);
       tx = await contract.transfer(
-        feature.fundingAddress, 
+        fundingAddress, 
         parseUnits(contributionAmount.value.toString(), currency.decimals)
       );
     }
@@ -137,6 +149,7 @@ const handleContribute = async () => {
     
     // Refetch balances
     if (address.value) fetchBalances(address.value);
+    fetchFeatureTotals();
     
   } catch (error: any) {
     console.error('Contribution failed:', error);
@@ -150,6 +163,80 @@ const handleContribute = async () => {
       };
     }
   }
+};
+
+const fetchEthUsdPrice = async () => {
+  const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd');
+  if (!response.ok) throw new Error('Failed to fetch ETH price');
+  const data = await response.json();
+  const price = data?.ethereum?.usd;
+  if (typeof price !== 'number') throw new Error('Invalid ETH price');
+  ethUsdPrice.value = price;
+};
+
+const fetchFeatureTotals = async () => {
+  loadingFeatureTotals.value = true;
+  featureTotalsError.value = null;
+
+  try {
+    await fetchEthUsdPrice();
+  } catch (error) {
+    ethUsdPrice.value = null;
+  }
+
+  try {
+    const totalsByFeature: Record<string, { address: string; totalUsd: number | null }> = {};
+    const networks = Object.values(SUPPORTED_NETWORKS);
+
+    await Promise.all(FEATURES.map(async (feature) => {
+      const address = deriveFeatureAddress(feature.id);
+      let totalUsd: number | null = 0;
+      let missingEthUsd = false;
+
+      await Promise.all(networks.map(async (network) => {
+        const provider = new JsonRpcProvider(network.rpcUrl.trim());
+        const tokens = SUPPORTED_TOKENS[network.chainId] || [];
+
+        await Promise.all(tokens.map(async (token) => {
+          try {
+            if (token.isNative) {
+              const balance = await provider.getBalance(address);
+              const amount = Number(formatEther(balance));
+              const hasAmount = amount > 0;
+              if (ethUsdPrice.value !== null) {
+                totalUsd = (totalUsd ?? 0) + amount * ethUsdPrice.value;
+              } else if (hasAmount) {
+                missingEthUsd = true;
+              }
+              return;
+            }
+
+            const contract = new Contract(token.address, ERC20_ABI, provider);
+            const balance = await contract.balanceOf(address);
+            const amount = Number(formatUnits(balance, token.decimals));
+            if (token.isStableUsd) {
+              totalUsd = (totalUsd ?? 0) + amount;
+            }
+          } catch (error) {
+          }
+        }));
+      }));
+
+      if (missingEthUsd) totalUsd = null;
+      totalsByFeature[feature.id] = { address, totalUsd };
+    }));
+
+    featureTotals.value = totalsByFeature;
+  } catch (error) {
+    featureTotalsError.value = 'Failed to load feature totals.';
+  } finally {
+    loadingFeatureTotals.value = false;
+  }
+};
+
+const formatUsdAmount = (amount: number) => {
+  if (!Number.isFinite(amount)) return '$0.00';
+  return amount.toLocaleString(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
 };
 
 </script>
@@ -225,13 +312,23 @@ const handleContribute = async () => {
             :key="feature.id" 
             class="feature-card"
             :class="{ selected: selectedFeatureId === feature.id }"
-            @click="selectedFeatureId = feature.id"
+            @click="handleSelectFeature(feature.id)"
           >
             <div class="feature-header">
               <div class="radio-indicator"></div>
               <h3>{{ feature.title }}</h3>
             </div>
             <p class="feature-desc">{{ feature.description }}</p>
+            <div class="feature-totals">
+              <div v-if="loadingFeatureTotals" class="feature-totals-status">Loading totals...</div>
+              <div v-else-if="featureTotalsError" class="feature-totals-status">{{ featureTotalsError }}</div>
+              <div v-else-if="featureTotals[feature.id]" class="feature-totals-list">
+                <div v-if="featureTotals[feature.id].totalUsd !== null" class="feature-total-usd">
+                  {{ formatUsdAmount(featureTotals[feature.id].totalUsd) }} donated
+                </div>
+                <div v-else class="feature-total-usd">USD total unavailable</div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -534,6 +631,26 @@ h2, h3 {
   margin: 0;
   color: #aaa;
   margin-left: calc(20px + 1rem);
+}
+
+.feature-totals {
+  margin-top: 0.75rem;
+  margin-left: calc(20px + 1rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: #bdbdbd;
+}
+
+.feature-totals-status {
+  color: #7f8cff;
+}
+
+.feature-total-usd {
+  color: #e2e6ff;
+  font-weight: 600;
+  margin-top: 0.1rem;
 }
 
 /* Sexy Contribution Form */
