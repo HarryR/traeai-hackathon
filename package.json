@@ -7,5 +7,8 @@
     "dev": "pnpm --filter feature-tracker-app run dev",
     "build": "pnpm --filter feature-tracker-app run build",
     "preview": "pnpm --filter feature-tracker-app run preview"
+  },
+  "devDependencies": {
+    "@types/qrcode": "^1.5.6"
   }
 }
