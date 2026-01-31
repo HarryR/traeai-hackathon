@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { Contract, parseEther, parseUnits } from 'ethers';
+import QRCode from 'qrcode';
 import { useWallet } from './composables/useWallet';
 import { useBalances } from './composables/useBalances';
 import { FEATURES, SUPPORTED_NETWORKS, SUPPORTED_TOKENS, OWNER_PUBKEY, ERC20_ABI } from './utils/constants';
@@ -16,6 +17,8 @@ const email = ref('');
 const contributionAmount = ref('');
 const selectedCurrency = ref<string>(''); // Symbol of selected currency
 const txStatus = ref<{ type: 'info' | 'success' | 'error', message: string } | null>(null);
+const pageUrl = ref('');
+const qrDataUrl = ref('');
 
 // Available currencies for the current chain
 const availableCurrencies = computed(() => {
@@ -39,6 +42,23 @@ watch(address, (newAddress) => {
   if (newAddress) {
     fetchBalances(newAddress);
   }
+});
+
+const generateQr = async (url: string) => {
+  try {
+    qrDataUrl.value = await QRCode.toDataURL(url, { width: 180, margin: 1 });
+  } catch (e) {
+    qrDataUrl.value = '';
+  }
+};
+
+onMounted(() => {
+  pageUrl.value = window.location.href;
+  if (pageUrl.value) generateQr(pageUrl.value);
+});
+
+watch(pageUrl, (url) => {
+  if (url) generateQr(url);
 });
 
 const handleContribute = async () => {
@@ -231,6 +251,19 @@ const handleContribute = async () => {
               <div v-else>0.0</div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section class="qr-section">
+        <h3>Share this page</h3>
+        <div class="qr-card">
+          <img
+            v-if="qrDataUrl"
+            class="qr-image"
+            :src="qrDataUrl"
+            alt="QR code for this page"
+          />
+          <div class="qr-url">{{ pageUrl }}</div>
         </div>
       </section>
     </main>
@@ -521,6 +554,39 @@ small {
   background: rgba(255, 100, 100, 0.1);
   color: #ff6464;
   border: 1px solid rgba(255, 100, 100, 0.2);
+}
+
+.qr-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.qr-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  background: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 12px;
+  padding: 1.5rem;
+  width: 100%;
+}
+
+.qr-image {
+  width: 180px;
+  height: 180px;
+  border-radius: 8px;
+  background: #fff;
+  padding: 8px;
+}
+
+.qr-url {
+  color: #888;
+  font-size: 0.85rem;
+  word-break: break-all;
+  text-align: center;
 }
 
 @keyframes fadeIn {
