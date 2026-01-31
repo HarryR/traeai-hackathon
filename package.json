@@ -1,0 +1,11 @@
+{
+  "name": "traeai-hackathon",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm --filter feature-tracker-app run dev",
+    "build": "pnpm --filter feature-tracker-app run build",
+    "preview": "pnpm --filter feature-tracker-app run preview"
+  }
+}
