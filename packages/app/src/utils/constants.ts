@@ -54,21 +54,51 @@ export const SUPPORTED_TOKENS: Record<number, Token[]> = {
 export const FEATURES: Feature[] = [
   {
     id: 'feat-001',
-    title: 'Dark Mode Support',
-    description: 'Add a comprehensive dark mode theme across the entire application.',
-    fundingAddress: '0x71C7656EC7ab88b098defB751B7401B5f6d8976F'
+    title: 'Smart Zones & Quiet Hours',
+    description: 'Draw motion zones, ignore hotspots, and schedule quiet hours to reduce false alerts.',
+    fundingAddress: '0x71c7656ec7ab88b098defb751b7401b5f6d8976f'
   },
   {
     id: 'feat-002',
-    title: 'Mobile Application',
-    description: 'Develop a native mobile application for iOS and Android.',
-    fundingAddress: '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC'
+    title: 'Event Timeline & Clip Vault',
+    description: 'Review a timeline of motion events with GIF/video clips and one-tap export.',
+    fundingAddress: '0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc'
   },
   {
     id: 'feat-003',
-    title: 'Staking Rewards',
-    description: 'Implement a staking mechanism for governance tokens.',
-    fundingAddress: '0x90F79bf6EB2c4f870365E785982E1f101E93b906'
+    title: 'Multi-Device Coverage',
+    description: 'Link multiple tablets or phones to one account with unified alerts.',
+    fundingAddress: '0x90f79bf6eb2c4f870365e785982e1f101e93b906'
+  },
+  {
+    id: 'feat-004',
+    title: 'Publish on F-Droid',
+    description: 'Ship a reproducible build and official listing for the open-source Android store.',
+    fundingAddress: '0x15d34aaf54267db7d7c367839aaf71a00a2c6a65'
+  },
+  {
+    id: 'feat-005',
+    title: 'Publish on Google Play',
+    description: 'Release a polished Play Store build with Play Integrity compliance.',
+    fundingAddress: '0x9965507d1a55bcc2695c58ba16fb37d819b0a4dc'
+  },
+  {
+    id: 'feat-006',
+    title: 'iPhone & iPad Companion',
+    description: 'Launch an iOS/iPadOS client for viewing alerts, clips, and status.',
+    fundingAddress: '0x976ea74026e726554db657fa54763abd0c3a0aa9'
+  },
+  {
+    id: 'feat-007',
+    title: 'Offline Clip Buffer',
+    description: 'Store recent clips locally and sync once connectivity returns.',
+    fundingAddress: '0x14dc79964da2c08b23698b3d3cc7ca32193d9955'
+  },
+  {
+    id: 'feat-008',
+    title: 'Smart Person Detection',
+    description: 'Optional on-device person detection to reduce pet or curtain false positives.',
+    fundingAddress: '0x23618e81e3f5cdf7f54c3d65f7fbc0abf5b21e8f'
   }
 ];
 

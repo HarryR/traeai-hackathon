@@ -158,13 +158,64 @@ const handleContribute = async () => {
   <div class="container">
     <header>
       <div class="brand">
-        <h1>Feature Request Tracker</h1>
-        <p class="subtitle">Vote with your Crypto</p>
+        <h1>NomadCam Feature Requests</h1>
+        <p class="subtitle">Portable security you control from anywhere</p>
+        <a
+          class="project-link"
+          href="https://github.com/harryR/nomadcam"
+          target="_blank"
+          rel="noopener"
+        >
+          github.com/harryR/nomadcam
+        </a>
       </div>
       <WalletConnect />
     </header>
     
     <main>
+      <section class="intro-section">
+        <div class="intro-card">
+          <h2 class="intro-title">Turn any Android tablet into a private security cam</h2>
+          <p class="intro-copy">
+            NomadCam is a motion-detecting camera that alerts you through Telegram, runs fully on-device,
+            and works over WiFi or cellular. No subscriptions, no cloud lock-in, just hardware you already own.
+          </p>
+          <p class="intro-copy">
+            We use feature requests to focus on what matters most for travelers and to fund device testing,
+            platform releases, and long-term maintenance.
+          </p>
+          <div class="intro-pills">
+            <span class="intro-pill">Telegram control</span>
+            <span class="intro-pill">No cloud</span>
+            <span class="intro-pill">WiFi or cellular</span>
+            <span class="intro-pill">GPU motion detection</span>
+          </div>
+        </div>
+        <div class="intro-card intro-card-accent">
+          <h3 class="intro-title">Set it and forget it</h3>
+          <p class="intro-copy">
+            Pair a Find My Device Network tracker to auto-arm when you leave and disarm when you return.
+            Point, scan the QR link to Telegram, and get instant motion GIFs if something moves.
+          </p>
+          <div class="intro-pills">
+            <span class="intro-pill">Auto arm/disarm</span>
+            <span class="intro-pill">Instant alerts</span>
+            <span class="intro-pill">Portable setup</span>
+          </div>
+        </div>
+        <div class="intro-card intro-card-media">
+          <h3 class="intro-title">See the demo</h3>
+          <img
+            class="demo-media"
+            src="https://raw.githubusercontent.com/HarryR/nomadcam/main/docs/demo.webp"
+            alt="NomadCam demo"
+          />
+          <p class="intro-copy">
+            Motion detection, Telegram control, and zero cloud dependence in one portable setup.
+          </p>
+        </div>
+      </section>
+
       <!-- Feature Selection Section -->
       <section class="features-section">
         <h2>Choose a feature to support</h2>
@@ -312,6 +363,76 @@ header {
   margin: 0;
   color: #888;
   font-size: 0.9rem;
+}
+
+.project-link {
+  color: #a0b7ff;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.project-link:hover {
+  color: #c4d1ff;
+}
+
+.intro-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+.intro-card {
+  background: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 16px;
+  padding: 1.75rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+.intro-card-accent {
+  border-color: rgba(100, 108, 255, 0.4);
+  background: linear-gradient(145deg, rgba(30, 30, 30, 0.95), rgba(32, 32, 42, 0.95));
+}
+
+.intro-card-media {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.intro-title {
+  margin: 0 0 0.75rem;
+  color: #f2f2f2;
+  font-size: 1.2rem;
+}
+
+.intro-copy {
+  margin: 0 0 1.25rem;
+  color: #b5b5b5;
+  line-height: 1.6;
+}
+
+.intro-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.intro-pill {
+  background: rgba(100, 108, 255, 0.12);
+  color: #c8d0ff;
+  border: 1px solid rgba(100, 108, 255, 0.25);
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+}
+
+.demo-media {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid #333;
+  background: #0f0f0f;
 }
 
 section {
