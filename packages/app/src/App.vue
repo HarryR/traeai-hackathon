@@ -324,7 +324,7 @@ const formatUsdAmount = (amount: number) => {
               <div v-else-if="featureTotalsError" class="feature-totals-status">{{ featureTotalsError }}</div>
               <div v-else-if="featureTotals[feature.id]" class="feature-totals-list">
                 <div v-if="featureTotals[feature.id].totalUsd !== null" class="feature-total-usd">
-                  {{ formatUsdAmount(featureTotals[feature.id].totalUsd) }} donated
+                  {{ formatUsdAmount(featureTotals[feature.id].totalUsd ?? 0) }} donated
                 </div>
                 <div v-else class="feature-total-usd">USD total unavailable</div>
               </div>
